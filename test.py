@@ -6,7 +6,8 @@ import requests
 
 s = requests.Session()
 
-DOMAIN="192.168.1.246:6779"
+DOMAIN = "192.168.1.246:6779"
+
 
 def on_message(message, data):
     # print(message)
@@ -14,7 +15,7 @@ def on_message(message, data):
         j = json.loads(message["payload"])
         t = j["type"]
 
-        if t == "encrypt":
+        if t == "tea_encrypt":
             b = bytes.fromhex(j["data"])
 
             headLen = struct.unpack("!i", b[:4])[0]
@@ -32,19 +33,23 @@ def on_message(message, data):
             guid = b[44 + l1 + l2 + l3 : 44 + l1 + l2 + l3 + l4].decode("utf-8")
             # struct.unpack("!i", b[44 + l1 + l2 + l3 + l4 : 47 + l1 + l2 + l3 + l4]) - 4
             l5 = (
-                struct.unpack("!h", b[48 + l1 + l2 + l3 + l4 : 50 + l1 + l2 + l3 + l4])[0]
+                struct.unpack("!h", b[48 + l1 + l2 + l3 + l4 : 50 + l1 + l2 + l3 + l4])[
+                    0
+                ]
                 - 2
             )
-            currentVersion = b[50 + l1 + l2 + l3 + l4 : 50 + l1 + l2 + l3 + l4 + l5].decode(
-                "utf-8"
-            )
+            currentVersion = b[
+                50 + l1 + l2 + l3 + l4 : 50 + l1 + l2 + l3 + l4 + l5
+            ].decode("utf-8")
             l6 = (
                 struct.unpack(
                     "!i", b[50 + l1 + l2 + l3 + l4 + l5 : 54 + l1 + l2 + l3 + l4 + l5]
                 )[0]
                 - 4
             )
-            signature = b[54 + l1 + l2 + l3 + l4 + l5 : 54 + l1 + l2 + l3 + l4 + l5 + l6]
+            signature = b[
+                54 + l1 + l2 + l3 + l4 + l5 : 54 + l1 + l2 + l3 + l4 + l5 + l6
+            ]
 
             # bodyLen = (
             #     struct.unpack(
@@ -68,7 +73,16 @@ def on_message(message, data):
                 "source": 0,
             }
             s.post(f"http://{DOMAIN}/packet", data=json.dumps(o))
-        elif t == "decrypt":
+
+            o = {
+                "mode": "tea",
+                "enc": True,
+                "data": j["data"],
+                "result": j["result"],
+                "key": j["key"],
+            }
+            s.post(f"http://{DOMAIN}/tea", data=json.dumps(o))
+        elif t == "tea_decrypt":
             b = bytes.fromhex(j["result"])
 
             headLen = struct.unpack("!i", b[:4])[0]
@@ -80,7 +94,9 @@ def on_message(message, data):
             cmd = b[20 + l1 : 20 + l1 + l2].decode("utf-8")
             l3 = struct.unpack("!i", b[20 + l1 + l2 : 24 + l1 + l2])[0] - 4
             msgCookie = b[24 + l1 + l2 : 24 + l1 + l2 + l3]
-            isCompress = struct.unpack("!i", b[24 + l1 + l2 + l3 : 28 + l1 + l2 + l3])[0]
+            isCompress = struct.unpack("!i", b[24 + l1 + l2 + l3 : 28 + l1 + l2 + l3])[
+                0
+            ]
 
             body = b[headLen:]
             o = {
@@ -94,8 +110,35 @@ def on_message(message, data):
                 "source": 0,
             }
             s.post(f"http://{DOMAIN}/packet", data=json.dumps(o))
+
+            o = {
+                "mode": "tea",
+                "enc": False,
+                "data": j["data"],
+                "result": j["result"],
+                "key": j["key"],
+            }
+            s.post(f"http://{DOMAIN}/tea", data=json.dumps(o))
+        elif t == "aes_encrypt":
+            o = {
+                "mode": "aes",
+                "enc": True,
+                "data": j["data"],
+                "result": j["result"] + " " + j["tag"],
+                "key": j["key"] + " " + j["iv"],
+            }
+            s.post(f"http://{DOMAIN}/tea", data=json.dumps(o))
+        elif t == "aes_decrypt":
+            o = {
+                "mode": "aes",
+                "enc": False,
+                "data": j["data"] + " " + j["tag"],
+                "result": j["result"],
+                "key": j["key"] + " " + j["iv"],
+            }
+            s.post(f"http://{DOMAIN}/tea", data=json.dumps(o))
     except:
-        print(j)
+        print(message)
 
 
 def main():
