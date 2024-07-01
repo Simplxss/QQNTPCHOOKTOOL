@@ -1,3 +1,20 @@
+
+// 9.9.11-24568
+// const tea_encrypt = 0x1823CFCF5;
+// const tea_decrypt = 0x1823CFF61;
+// const tea_encrypt2 = [0x1830762BE, 0x180b416ab];
+// const tea_decrypt2 = [];
+// const aes_encrypt = 0x1806AB91E;
+// const aes_decrypt = 0x1806ABE6E;
+
+// 9.9.12-25234
+const tea_encrypt = 0x1823D7E61;
+const tea_decrypt = 0x1823D80CD;
+const tea_encrypt2 = [0x180B244FF, 0x18306A486];
+const tea_decrypt2 = [0x180B24759, 0x18306A6E0];
+const aes_encrypt = 0x1806A07BB;
+const aes_decrypt = 0x1806A0CEB;
+
 function resolveAddress(baseAddr, addr) {
     const idaBase = 0x180000000; // Enter the base address of jvm.dll as seen in your favorite disassembler (here IDA)
     const offset = ptr(addr).sub(idaBase); // Calculate offset in memory from base address in IDA database
@@ -165,7 +182,7 @@ async function main() {
     // })
     const readVector = (x) => x.readPointer().readByteArray(+x.add(8).readPointer().sub(x.readPointer()));
     // AES加密算法
-    Interceptor.attach(resolveAddress(baseAddr, 0x1806AB91E), {
+    Interceptor.attach(resolveAddress(baseAddr, aes_encrypt), {
         onEnter: function (args) {
             //console.log("AES_encrypt START======================")
             this.data = readVector(args[0])
@@ -193,7 +210,7 @@ async function main() {
     })
 
     // AES解密算法
-    Interceptor.attach(resolveAddress(baseAddr, 0x1806ABE6E), {
+    Interceptor.attach(resolveAddress(baseAddr, aes_decrypt), {
         onEnter: function (args) {
             //console.log("AES_decrypt START======================")
             this.data = readVector(args[0])
@@ -220,7 +237,7 @@ async function main() {
 
 
     // TEA加密
-    Interceptor.attach(resolveAddress(baseAddr, 0x1823CFCF5), {
+    Interceptor.attach(resolveAddress(baseAddr, tea_encrypt), {
         onEnter: function (args) {
             this.data = args[0].readByteArray(args[1].toInt32())
             this.key = args[2].readByteArray(args[3].toInt32())
@@ -238,7 +255,7 @@ async function main() {
         }
     })
     // TEA解密
-    Interceptor.attach(resolveAddress(baseAddr, 0x1823CFF61), {
+    Interceptor.attach(resolveAddress(baseAddr, tea_decrypt), {
         onEnter: function (args) {
             this.data = args[0].readByteArray(args[1].toInt32())
             this.key = args[2].readByteArray(args[3].toInt32())
@@ -256,54 +273,46 @@ async function main() {
         }
     })
 
-    // TEA加密 ?
-    // teaEncrypt = [0x1830762BE, 0x180b416ab]
-    // for (var i = 0; i < teaEncrypt.length; i++) {
-    //     Interceptor.attach(resolveAddress(baseAddr, teaEncrypt[i]), {
-    //         onEnter: function (args) {
-    //             this.data = args[0].readByteArray(args[1].toInt32())
-    //             this.key = args[2].readByteArray(0x10)
-    //             this.out = args[3]
-    //             this.out_len = args[4]
-    //             //PrintLog({"key":"encode","size:": this.context.edx, "key:": bytesToHex(key), "data:": bytesToHex(data)})
-    //         },
-    //         onLeave: function () {
-    //             PrintLog({
-    //                 "type": "encrypt",
-    //                 "data": bytesToHex(this.data),
-    //                 "key": bytesToHex(this.key),
-    //                 "result": bytesToHex(this.out.readByteArray(this.out_len.readPointer().toInt32()))
-    //             })
-    //         }
-    //     })
-    // }
-    // TEA解密 ?
-    // Interceptor.attach(resolveAddress(baseAddr, 0x182139340), {
-    //     onEnter: function (args) {
-    //         PrintLog({
-    //             "type": "info",
-    //             "data": {
-    //                 "from": "0x182139340",
-    //                 "arg0": args[0],
-    //                 "arg1": args[1],
-    //                 "arg2": args[2],
-    //                 "arg3": args[3],
-    //             },
-    //         })
-    //         this.data = args[0].readByteArray(args[1].toInt32())
-    //         this.key = args[2].readByteArray(0x10)
-    //         this.out_len = args[3]
-    //         //PrintLog({"key":"decode","size:": this.context.edx, "key:": bytesToHex(key), "data:": bytesToHex(data)})
-    //     },
-    //     onLeave: function (ret) {
-    //         PrintLog({
-    //             "type": "decrypt",
-    //             "data": bytesToHex(this.data),
-    //             "key": bytesToHex(this.key),
-    //             // "result": bytesToHex(ret.readByteArray(this.out_len.readPointer().toInt32()))
-    //         })
-    //     }
-    // })
+    // TEA加密
+    for (var i = 0; i < tea_encrypt2.length; i++) {
+        Interceptor.attach(resolveAddress(baseAddr, tea_encrypt2[i]), {
+            onEnter: function (args) {
+                this.data = args[0].readByteArray(args[1].toInt32())
+                this.key = args[2].readByteArray(0x10)
+                this.out = args[3]
+                this.out_len = args[4]
+                //PrintLog({"key":"encode","size:": this.context.edx, "key:": bytesToHex(key), "data:": bytesToHex(data)})
+            },
+            onLeave: function () {
+                PrintLog({
+                    "type": "tea_encrypt",
+                    "data": bytesToHex(this.data),
+                    "key": bytesToHex(this.key),
+                    "result": bytesToHex(this.out.readByteArray(this.out_len.readPointer().toInt32()))
+                })
+            }
+        })
+    }
+    // TEA解密
+    for (var i = 0; i < tea_decrypt2.length; i++) {
+        Interceptor.attach(resolveAddress(baseAddr, tea_decrypt2[i]), {
+            onEnter: function (args) {
+                this.data = args[0].readByteArray(args[1].toInt32())
+                this.key = args[2].readByteArray(0x10)
+                this.out = args[3]
+                this.out_len = args[4]
+                //PrintLog({"key":"encode","size:": this.context.edx, "key:": bytesToHex(key), "data:": bytesToHex(data)})
+            },
+            onLeave: function () {
+                PrintLog({
+                    "type": "tea_decrypt",
+                    "data": bytesToHex(this.data),
+                    "key": bytesToHex(this.key),
+                    "result": bytesToHex(this.out.readByteArray(this.out_len.readPointer().toInt32()))
+                })
+            }
+        })
+    }
 
 }
 
