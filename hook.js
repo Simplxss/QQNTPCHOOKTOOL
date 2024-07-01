@@ -7,7 +7,7 @@
 // const aes_encrypt = 0x1806AB91E;
 // const aes_decrypt = 0x1806ABE6E;
 
-// 9.9.12-25234
+// 9.9.12-25234 & 9.9.12-25300
 const tea_encrypt = 0x1823D7E61;
 const tea_decrypt = 0x1823D80CD;
 const tea_encrypt2 = [0x180B244FF, 0x18306A486];
