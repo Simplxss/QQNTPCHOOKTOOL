@@ -8,12 +8,20 @@
 // const aes_decrypt = 0x1806ABE6E;
 
 // 9.9.12-25234 & 9.9.12-25300
-const tea_encrypt = 0x1823D7E61;
-const tea_decrypt = 0x1823D80CD;
-const tea_encrypt2 = [0x180B244FF, 0x18306A486];
-const tea_decrypt2 = [0x180B24759, 0x18306A6E0];
-const aes_encrypt = 0x1806A07BB;
-const aes_decrypt = 0x1806A0CEB;
+//const tea_encrypt = 0x1823D7E61;
+//const tea_decrypt = 0x1823D80CD;
+//const tea_encrypt2 = [0x180B244FF, 0x18306A486];
+//const tea_decrypt2 = [0x180B24759, 0x18306A6E0];
+//const aes_encrypt = 0x1806A07BB;
+//const aes_decrypt = 0x1806A0CEB;
+
+// 9.9.15-28418 Windows
+const tea_encrypt = 0x182257261;
+const tea_decrypt = 0x1822574CB;
+const tea_encrypt2 = [];
+const tea_decrypt2 = [];
+const aes_encrypt = 0;
+const aes_decrypt = 0;
 
 function resolveAddress(baseAddr, addr) {
     const idaBase = 0x180000000; // Enter the base address of jvm.dll as seen in your favorite disassembler (here IDA)
@@ -42,37 +50,6 @@ async function main() {
         if (baseAddr != null) break;
     }
     console.log('[+] wrapper.node baseAddr: ' + baseAddr);
-
-    const log1 = []; // Here we use the function address as seen in our disassembler
-    for (var i = 0; i < log1.length; i++) {
-        Interceptor.attach(resolveAddress(baseAddr, log1[i]), {
-            // When function is called, print out its parameters
-            onEnter(args) {
-                var log = Memory.readCString(args[4].readPointer())
-                if (log.search('{}') != -1)
-                    log.replace('{}', Memory.readCString(args[5]));
-                console.log('[+] log1 Arg: type=' + args[0] + ',file=' + Memory.readCString(args[1]) + ',line=' + args[2] + ',subtype=' + Memory.readCString(args[3]) + ',info=' + log);
-                // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
-            },
-        });
-    }
-
-    const log2 = []; // Here we use the function address as seen in our disassembler
-    for (var i = 0; i < log2.length; i++) {
-        Interceptor.attach(resolveAddress(baseAddr, log2[i]), {
-            // When function is called, print out its parameters
-            onEnter(args) {
-                var log = Memory.readCString(args[5].readPointer())
-                var i = 5;
-                while (log.search('{}') != -1) {
-                    log = log.replace('{}', Memory.readCString(args[++i]));
-                }
-                console.log('[+] log2 Arg: from=' + Memory.readCString(args[0]) + ' type=' + args[1] + ',file=' + Memory.readCString(args[2]) + ',line=' + args[3] + ',subtype=' + Memory.readCString(args[4]) + ',info=' + log);
-                // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
-            },
-        });
-    }
-
 
     // const log3 = [0x1805BCF10]; // Here we use the function address as seen in our disassembler
     // for (var i = 0; i < log3.length; i++) {
@@ -180,60 +157,61 @@ async function main() {
     //         PrintLog({"shareKey": bytesToHex(shaKey)})
     //     }
     // })
-    const readVector = (x) => x.readPointer().readByteArray(+x.add(8).readPointer().sub(x.readPointer()));
-    // AES加密算法
-    Interceptor.attach(resolveAddress(baseAddr, aes_encrypt), {
-        onEnter: function (args) {
-            //console.log("AES_encrypt START======================")
-            this.data = readVector(args[0])
-            this.key = readVector(args[1])
-            this.iv = readVector(args[2])
-            this.tag = args[3]
-            this.result = args[4]
-            //console.log("AES_encrypt => size:", dataSize, "key:", bytesToHex(key), "iv:", bytesToHex(iv), "data:", bytesToHex(data))
 
-        },
-        onLeave: function () {
-            var resultSize = this.result.add(0x4).readPointer().sub(this.result.readPointer())
-            // console.log("tag", bytesToHex(this.out1.readPointer().readByteArray(0x10)))
-            // console.log("data", bytesToHex(this.out2.readPointer().readByteArray(resultSize.toInt32())))
-            // console.log("AES_encrypt END========================")
-            PrintLog({
-                "type": "aes_encrypt",
-                "data": bytesToHex(this.data),
-                "key": bytesToHex(this.key),
-                "iv": bytesToHex(this.iv),
-                "result": bytesToHex(readVector(this.result)),
-                "tag": bytesToHex(readVector(this.tag))
-            })
-        }
-    })
+    // const readVector = (x) => x.readPointer().readByteArray(+x.add(8).readPointer().sub(x.readPointer()));
+    // // AES加密算法
+    // Interceptor.attach(resolveAddress(baseAddr, aes_encrypt), {
+    //     onEnter: function (args) {
+    //         //console.log("AES_encrypt START======================")
+    //         this.data = readVector(args[0])
+    //         this.key = readVector(args[1])
+    //         this.iv = readVector(args[2])
+    //         this.tag = args[3]
+    //         this.result = args[4]
+    //         //console.log("AES_encrypt => size:", dataSize, "key:", bytesToHex(key), "iv:", bytesToHex(iv), "data:", bytesToHex(data))
 
-    // AES解密算法
-    Interceptor.attach(resolveAddress(baseAddr, aes_decrypt), {
-        onEnter: function (args) {
-            //console.log("AES_decrypt START======================")
-            this.data = readVector(args[0])
-            this.key = readVector(args[1])
-            this.iv = readVector(args[2])
-            this.tag = readVector(args[3])
-            this.result = args[4]
-            // console.log("AES_decrypt => size:", dataSize, "key:", bytesToHex(key), "iv:", bytesToHex(iv), "data:", bytesToHex(data))
-        },
-        onLeave: function () {
-            // console.log("tag", bytesToHex(this.out1.readPointer().readByteArray(0x10)))
-            // console.log("data", bytesToHex(this.out2.readPointer().readByteArray(resultSize.toInt32())))
-            // console.log("AES_decrypt END========================")
-            PrintLog({
-                "type": "aes_decrypt",
-                "data": bytesToHex(this.data),
-                "tag": bytesToHex(this.tag),
-                "key": bytesToHex(this.key),
-                "iv": bytesToHex(this.iv),
-                "result": bytesToHex(readVector(this.result)),
-            })
-        }
-    })
+    //     },
+    //     onLeave: function () {
+    //         var resultSize = this.result.add(0x4).readPointer().sub(this.result.readPointer())
+    //         // console.log("tag", bytesToHex(this.out1.readPointer().readByteArray(0x10)))
+    //         // console.log("data", bytesToHex(this.out2.readPointer().readByteArray(resultSize.toInt32())))
+    //         // console.log("AES_encrypt END========================")
+    //         PrintLog({
+    //             "type": "aes_encrypt",
+    //             "data": bytesToHex(this.data),
+    //             "key": bytesToHex(this.key),
+    //             "iv": bytesToHex(this.iv),
+    //             "result": bytesToHex(readVector(this.result)),
+    //             "tag": bytesToHex(readVector(this.tag))
+    //         })
+    //     }
+    // })
+
+    // // AES解密算法
+    // Interceptor.attach(resolveAddress(baseAddr, aes_decrypt), {
+    //     onEnter: function (args) {
+    //         //console.log("AES_decrypt START======================")
+    //         this.data = readVector(args[0])
+    //         this.key = readVector(args[1])
+    //         this.iv = readVector(args[2])
+    //         this.tag = readVector(args[3])
+    //         this.result = args[4]
+    //         // console.log("AES_decrypt => size:", dataSize, "key:", bytesToHex(key), "iv:", bytesToHex(iv), "data:", bytesToHex(data))
+    //     },
+    //     onLeave: function () {
+    //         // console.log("tag", bytesToHex(this.out1.readPointer().readByteArray(0x10)))
+    //         // console.log("data", bytesToHex(this.out2.readPointer().readByteArray(resultSize.toInt32())))
+    //         // console.log("AES_decrypt END========================")
+    //         PrintLog({
+    //             "type": "aes_decrypt",
+    //             "data": bytesToHex(this.data),
+    //             "tag": bytesToHex(this.tag),
+    //             "key": bytesToHex(this.key),
+    //             "iv": bytesToHex(this.iv),
+    //             "result": bytesToHex(readVector(this.result)),
+    //         })
+    //     }
+    // })
 
 
     // TEA加密
