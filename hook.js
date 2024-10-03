@@ -51,6 +51,36 @@ async function main() {
     }
     console.log('[+] wrapper.node baseAddr: ' + baseAddr);
 
+    // const log1 = []; // Here we use the function address as seen in our disassembler
+    // for (var i = 0; i < log1.length; i++) {
+    //     Interceptor.attach(resolveAddress(baseAddr, log1[i]), {
+    //         // When function is called, print out its parameters
+    //         onEnter(args) {
+    //             var log = Memory.readCString(args[4].readPointer())
+    //             if (log.search('{}') != -1)
+    //                 log.replace('{}', Memory.readCString(args[5]));
+    //             console.log('[+] log1 Arg: type=' + args[0] + ',file=' + Memory.readCString(args[1]) + ',line=' + args[2] + ',subtype=' + Memory.readCString(args[3]) + ',info=' + log);
+    //             // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
+    //         },
+    //     });
+    // }
+
+    // const log2 = []; // Here we use the function address as seen in our disassembler
+    // for (var i = 0; i < log2.length; i++) {
+    //     Interceptor.attach(resolveAddress(baseAddr, log2[i]), {
+    //         // When function is called, print out its parameters
+    //         onEnter(args) {
+    //             var log = Memory.readCString(args[5].readPointer())
+    //             var i = 5;
+    //             while (log.search('{}') != -1) {
+    //                 log = log.replace('{}', Memory.readCString(args[++i]));
+    //             }
+    //             console.log('[+] log2 Arg: from=' + Memory.readCString(args[0]) + ' type=' + args[1] + ',file=' + Memory.readCString(args[2]) + ',line=' + args[3] + ',subtype=' + Memory.readCString(args[4]) + ',info=' + log);
+    //             // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
+    //         },
+    //     });
+    // }
+
     // const log3 = [0x1805BCF10]; // Here we use the function address as seen in our disassembler
     // for (var i = 0; i < log3.length; i++) {
     //     Interceptor.attach(resolveAddress(baseAddr, log3[i]), {
