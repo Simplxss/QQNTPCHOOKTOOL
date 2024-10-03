@@ -8,12 +8,20 @@
 // const aes_decrypt = 0x1806ABE6E;
 
 // 9.9.12-25234 & 9.9.12-25300
-const tea_encrypt = 0x1823D7E61;
-const tea_decrypt = 0x1823D80CD;
-const tea_encrypt2 = [0x180B244FF, 0x18306A486];
-const tea_decrypt2 = [0x180B24759, 0x18306A6E0];
-const aes_encrypt = 0x1806A07BB;
-const aes_decrypt = 0x1806A0CEB;
+//const tea_encrypt = 0x1823D7E61;
+//const tea_decrypt = 0x1823D80CD;
+//const tea_encrypt2 = [0x180B244FF, 0x18306A486];
+//const tea_decrypt2 = [0x180B24759, 0x18306A6E0];
+//const aes_encrypt = 0x1806A07BB;
+//const aes_decrypt = 0x1806A0CEB;
+
+// 9.9.15-28418 Windows
+const tea_encrypt = 0x182257261;
+const tea_decrypt = 0x1822574CB;
+const tea_encrypt2 = [];
+const tea_decrypt2 = [];
+const aes_encrypt = 0x18076689F;
+const aes_decrypt = 0x180766DCF;
 
 function resolveAddress(baseAddr, addr) {
     const idaBase = 0x180000000; // Enter the base address of jvm.dll as seen in your favorite disassembler (here IDA)
@@ -43,36 +51,35 @@ async function main() {
     }
     console.log('[+] wrapper.node baseAddr: ' + baseAddr);
 
-    const log1 = []; // Here we use the function address as seen in our disassembler
-    for (var i = 0; i < log1.length; i++) {
-        Interceptor.attach(resolveAddress(baseAddr, log1[i]), {
-            // When function is called, print out its parameters
-            onEnter(args) {
-                var log = Memory.readCString(args[4].readPointer())
-                if (log.search('{}') != -1)
-                    log.replace('{}', Memory.readCString(args[5]));
-                console.log('[+] log1 Arg: type=' + args[0] + ',file=' + Memory.readCString(args[1]) + ',line=' + args[2] + ',subtype=' + Memory.readCString(args[3]) + ',info=' + log);
-                // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
-            },
-        });
-    }
+    // const log1 = []; // Here we use the function address as seen in our disassembler
+    // for (var i = 0; i < log1.length; i++) {
+    //     Interceptor.attach(resolveAddress(baseAddr, log1[i]), {
+    //         // When function is called, print out its parameters
+    //         onEnter(args) {
+    //             var log = Memory.readCString(args[4].readPointer())
+    //             if (log.search('{}') != -1)
+    //                 log.replace('{}', Memory.readCString(args[5]));
+    //             console.log('[+] log1 Arg: type=' + args[0] + ',file=' + Memory.readCString(args[1]) + ',line=' + args[2] + ',subtype=' + Memory.readCString(args[3]) + ',info=' + log);
+    //             // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
+    //         },
+    //     });
+    // }
 
-    const log2 = []; // Here we use the function address as seen in our disassembler
-    for (var i = 0; i < log2.length; i++) {
-        Interceptor.attach(resolveAddress(baseAddr, log2[i]), {
-            // When function is called, print out its parameters
-            onEnter(args) {
-                var log = Memory.readCString(args[5].readPointer())
-                var i = 5;
-                while (log.search('{}') != -1) {
-                    log = log.replace('{}', Memory.readCString(args[++i]));
-                }
-                console.log('[+] log2 Arg: from=' + Memory.readCString(args[0]) + ' type=' + args[1] + ',file=' + Memory.readCString(args[2]) + ',line=' + args[3] + ',subtype=' + Memory.readCString(args[4]) + ',info=' + log);
-                // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
-            },
-        });
-    }
-
+    // const log2 = []; // Here we use the function address as seen in our disassembler
+    // for (var i = 0; i < log2.length; i++) {
+    //     Interceptor.attach(resolveAddress(baseAddr, log2[i]), {
+    //         // When function is called, print out its parameters
+    //         onEnter(args) {
+    //             var log = Memory.readCString(args[5].readPointer())
+    //             var i = 5;
+    //             while (log.search('{}') != -1) {
+    //                 log = log.replace('{}', Memory.readCString(args[++i]));
+    //             }
+    //             console.log('[+] log2 Arg: from=' + Memory.readCString(args[0]) + ' type=' + args[1] + ',file=' + Memory.readCString(args[2]) + ',line=' + args[3] + ',subtype=' + Memory.readCString(args[4]) + ',info=' + log);
+    //             // console.log('[+] Caller ' + this.returnAddress + ' ' + reverseAddress(baseAddr, this.returnAddress));
+    //         },
+    //     });
+    // }
 
     // const log3 = [0x1805BCF10]; // Here we use the function address as seen in our disassembler
     // for (var i = 0; i < log3.length; i++) {
@@ -180,6 +187,7 @@ async function main() {
     //         PrintLog({"shareKey": bytesToHex(shaKey)})
     //     }
     // })
+
     const readVector = (x) => x.readPointer().readByteArray(+x.add(8).readPointer().sub(x.readPointer()));
     // AES加密算法
     Interceptor.attach(resolveAddress(baseAddr, aes_encrypt), {
