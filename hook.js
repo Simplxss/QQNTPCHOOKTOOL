@@ -18,8 +18,8 @@
 // 9.9.15-28418 Windows
 const tea_encrypt = 0x182257261;
 const tea_decrypt = 0x1822574CB;
-const tea_encrypt2 = [];
-const tea_decrypt2 = [];
+const tea_encrypt2 = [0x180C9D257, 0x18314803E];
+const tea_decrypt2 = [0x180C9D4B1, 0x183148298];
 const aes_encrypt = 0x18076689F;
 const aes_decrypt = 0x180766DCF;
 
